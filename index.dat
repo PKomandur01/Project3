@@ -1,0 +1,130 @@
+import os
+import struct
+
+HEADER_SIZE = 512
+MAGIC = b'4337PRJ3'
+
+MIN_DEGREE = 10
+MAX_KEYS = 2 * MIN_DEGREE - 1
+MAX_CHILDREN = MAX_KEYS + 1
+
+def toBigEndian(num):
+    return num.to_bytes(8, 'big')
+
+def fromBigEndian(byte_data):
+    return int.from_bytes(byte_data, 'big')
+
+def createFile(fname):
+    if os.path.exists(fname):
+        overwrite = input(f"File '{fname}' exists. Overwrite? (y/n): ").lower()
+        if overwrite != 'y':
+            print("Operation aborted.")
+            return
+
+    with open(fname, 'wb') as f:
+        f.write(MAGIC)
+        f.write(toBigEndian(0))
+        f.write(toBigEndian(1))
+        f.write(b'\x00' * (HEADER_SIZE - len(MAGIC) - 16))
+    print(f"File '{fname}' created.")
+
+def openFile(fname):
+    if not os.path.exists(fname):
+        print("File does not exist.")
+        return None
+
+    with open(fname, 'rb') as f:
+        header = f.read(HEADER_SIZE)
+        if header[:8] != MAGIC:
+            print("Invalid magic number.")
+            return None
+        rootId = fromBigEndian(header[8:16])
+        nextId = fromBigEndian(header[16:24])
+        print(f"Root ID: {rootId}, Next Block ID: {nextId}")
+        return f
+
+def writeHeader(file, rootId=0, nextId=1):
+    with open(file, 'r+b') as f:
+        f.seek(0)
+        f.write(MAGIC)
+        f.write(toBigEndian(rootId))
+        f.write(toBigEndian(nextId))
+        f.write(b'\x00' * (HEADER_SIZE - len(MAGIC) - 16))
+    print("Header updated.")
+
+def insertKeyValue(file, key, value):
+    # Here, you will implement logic for inserting key-value pairs into the index.
+    print(f"Inserting key {key} with value {value}.")
+
+def searchKey(file, key):
+    # Implement logic for searching key in the B-tree index.
+    print(f"Searching for key {key}.")
+
+def loadFile(file, dataFile):
+    # Implement loading data from a file and inserting key-value pairs.
+    print(f"Loading data from {dataFile}.")
+
+def printIndex(file):
+    # Implement logic for printing all key-value pairs.
+    print("Printing index.")
+
+def extractData(file, outputFile):
+    # Implement extraction of data to a file.
+    print(f"Extracting data to {outputFile}.")
+
+def quitProgram():
+    print("Exiting program.")
+    exit()
+
+# Main interactive loop
+def main():
+    currentFile = None
+    while True:
+        command = input("Enter command (create, open, insert, search, load, print, extract, quit): ").lower()
+        if command == 'create':
+            fname = input("Enter file name: ").strip()
+            createFile(fname)
+            currentFile = openFile(fname)
+        elif command == 'open':
+            if currentFile:
+                print("An index file is already open.")
+            else:
+                fname = input("Enter file name: ").strip()
+                currentFile = openFile(fname)
+        elif command == 'insert':
+            if not currentFile:
+                print("No file open.")
+            else:
+                key = int(input("Enter key: "))
+                value = int(input("Enter value: "))
+                insertKeyValue(currentFile, key, value)
+        elif command == 'search':
+            if not currentFile:
+                print("No file open.")
+            else:
+                key = int(input("Enter key: "))
+                searchKey(currentFile, key)
+        elif command == 'load':
+            if not currentFile:
+                print("No file open.")
+            else:
+                dataFile = input("Enter data file name: ")
+                loadFile(currentFile, dataFile)
+        elif command == 'print':
+            if not currentFile:
+                print("No file open.")
+            else:
+                printIndex(currentFile)
+        elif command == 'extract':
+            if not currentFile:
+                print("No file open.")
+            else:
+                outputFile = input("Enter output file name: ")
+                extractData(currentFile, outputFile)
+        elif command == 'quit':
+            quitProgram()
+        else:
+            print("Invalid command. Try again.")
+
+if __name__ == "__main__":
+    main()
